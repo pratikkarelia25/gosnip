@@ -2,8 +2,15 @@
 /gosnip
 /cmd/gosnip/gosnip
 *.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 *.test
 *.out
+coverage.*
+*.coverprofile
+profile.cov
 
 # SQLite database files
 *.db
@@ -13,6 +20,11 @@
 
 # Go
 vendor/
+go.work
+go.work.sum
+
+# env file
+.env
 
 # Editor / OS
 .DS_Store
