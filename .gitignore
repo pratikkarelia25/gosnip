@@ -1,0 +1,20 @@
+# Build artifacts
+/gosnip
+/cmd/gosnip/gosnip
+*.exe
+*.test
+*.out
+
+# SQLite database files
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Go
+vendor/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
