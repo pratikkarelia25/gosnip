@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -29,6 +30,12 @@ func New(connStr string) (*Store, error) {
 		return nil, err
 	}
 	return &Store{db: db}, nil
+}
+
+func NewFromParts(host, user, password, dbname string) (*Store, error) {
+	// Build DSN using key=value format to avoid URL-encoding issues with special chars in passwords.
+	connStr := fmt.Sprintf("host=%s user=%s password=%s dbname=%s sslmode=require", host, user, password, dbname)
+	return New(connStr)
 }
 
 func (s *Store) Migrate() error {

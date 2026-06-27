@@ -20,13 +20,17 @@ func main() {
 		frontendURL = "http://localhost:5173"
 	}
 
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		fmt.Println("DATABASE_URL is not set")
+	dbHost := os.Getenv("DB_HOST")
+	dbUser := os.Getenv("DB_USER")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	dbName := os.Getenv("DB_NAME")
+
+	if dbHost == "" || dbUser == "" || dbPassword == "" || dbName == "" {
+		fmt.Println("DB_HOST, DB_USER, DB_PASSWORD and DB_NAME must all be set")
 		return
 	}
 
-	db, err := store.New(dbURL)
+	db, err := store.NewFromParts(dbHost, dbUser, dbPassword, dbName)
 	if err != nil {
 		fmt.Printf("An Error occured connecting to the database: %s", err)
 		return
