@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 var ErrNotFound = errors.New("short code not found")
@@ -20,9 +20,12 @@ type Store struct {
 	db *sql.DB
 }
 
-func New(dbPath string) (*Store, error) {
-	db, err := sql.Open("sqlite3", dbPath)
+func New(connStr string) (*Store, error) {
+	db, err := sql.Open("pgx", connStr)
 	if err != nil {
+		return nil, err
+	}
+	if err := db.Ping(); err != nil {
 		return nil, err
 	}
 	return &Store{db: db}, nil
@@ -31,10 +34,10 @@ func New(dbPath string) (*Store, error) {
 func (s *Store) Migrate() error {
 	_, err := s.db.Exec(`
 	CREATE TABLE IF NOT EXISTS url_mappings (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id BIGSERIAL PRIMARY KEY,
 		short_code TEXT NOT NULL UNIQUE,
 		long_url TEXT NOT NULL,
-		expires_at INTEGER
+		expires_at BIGINT
 	);
 	`)
 	return err
@@ -49,7 +52,7 @@ func (s *Store) InsertMapping(shortCode, longUrl string, expiresAt *time.Time) e
 	}
 
 	_, err := s.db.Exec(
-		`INSERT INTO url_mappings (short_code, long_url, expires_at) VALUES (?, ?, ?)`,
+		`INSERT INTO url_mappings (short_code, long_url, expires_at) VALUES ($1, $2, $3)`,
 		shortCode, longUrl, expiresAtUnix,
 	)
 	return err
@@ -59,7 +62,7 @@ func (s *Store) InsertMapping(shortCode, longUrl string, expiresAt *time.Time) e
 // regardless of whether the mapping has expired.
 func (s *Store) ShortCodeTaken(shortCode string) (bool, error) {
 	var count int
-	err := s.db.QueryRow(`SELECT COUNT(1) FROM url_mappings WHERE short_code = ?`, shortCode).Scan(&count)
+	err := s.db.QueryRow(`SELECT COUNT(1) FROM url_mappings WHERE short_code = $1`, shortCode).Scan(&count)
 	if err != nil {
 		return false, err
 	}
@@ -72,7 +75,7 @@ func (s *Store) GetActiveLongUrl(shortCode string) (string, error) {
 	var longUrl string
 	var expiresAt sql.NullInt64
 
-	row := s.db.QueryRow(`SELECT long_url, expires_at FROM url_mappings WHERE short_code = ?`, shortCode)
+	row := s.db.QueryRow(`SELECT long_url, expires_at FROM url_mappings WHERE short_code = $1`, shortCode)
 	if err := row.Scan(&longUrl, &expiresAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", ErrNotFound
@@ -93,7 +96,7 @@ func (s *Store) FindActiveShortCode(longUrl string) (string, error) {
 	var shortCode string
 	var expiresAt sql.NullInt64
 
-	rows, err := s.db.Query(`SELECT short_code, expires_at FROM url_mappings WHERE long_url = ?`, longUrl)
+	rows, err := s.db.Query(`SELECT short_code, expires_at FROM url_mappings WHERE long_url = $1`, longUrl)
 	if err != nil {
 		return "", err
 	}

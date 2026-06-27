@@ -20,7 +20,13 @@ func main() {
 		frontendURL = "http://localhost:5173"
 	}
 
-	db, err := store.New("database/gosnip.db")
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		fmt.Println("DATABASE_URL is not set")
+		return
+	}
+
+	db, err := store.New(dbURL)
 	if err != nil {
 		fmt.Printf("An Error occured connecting to the database: %s", err)
 		return
