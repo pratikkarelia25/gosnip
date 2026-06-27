@@ -22,18 +22,19 @@ const (
 )
 
 type Handler struct {
-	store *store.Store
+	store       *store.Store
+	frontendURL string
 }
 
-func NewHandler(store *store.Store) *Handler {
-	return &Handler{store: store}
+func NewHandler(store *store.Store, frontendURL string) *Handler {
+	return &Handler{store: store, frontendURL: frontendURL}
 }
 
 func (h *Handler) Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"http://localhost:5173"},
+		AllowedOrigins: []string{h.frontendURL},
 		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders: []string{"Content-Type"},
 	}))
@@ -63,7 +64,7 @@ func (h *Handler) redirect(w http.ResponseWriter, r *http.Request) {
 	longUrl, err := h.store.GetActiveLongUrl(code)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			http.Redirect(w, r, "http://localhost:5173?error=not_found", http.StatusTemporaryRedirect)
+			http.Redirect(w, r, h.frontendURL+"?error=not_found", http.StatusTemporaryRedirect)
 			return
 		}
 		writeError(w, http.StatusInternalServerError, err.Error())
