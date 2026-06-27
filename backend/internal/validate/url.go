@@ -8,7 +8,7 @@ func URL(longUrl string) bool {
 		return false
 	}
 
-	if u.Scheme == "" || u.Host == "" {
+if u.Scheme == "" || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") {
 		return false
 	}
 

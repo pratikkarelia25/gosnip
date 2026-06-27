@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 
 	"github.com/pratikkarelia25/gosnip/internal/shortcode"
 	"github.com/pratikkarelia25/gosnip/internal/store"
@@ -31,6 +32,11 @@ func NewHandler(store *store.Store) *Handler {
 func (h *Handler) Routes() chi.Router {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{"http://localhost:5173"},
+		AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+		AllowedHeaders: []string{"Content-Type"},
+	}))
 	r.Get("/", h.root)
 	r.Get("/{code}", h.redirect)
 	r.Post("/shorten", h.shorten)
@@ -57,7 +63,7 @@ func (h *Handler) redirect(w http.ResponseWriter, r *http.Request) {
 	longUrl, err := h.store.GetActiveLongUrl(code)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
-			writeError(w, http.StatusNotFound, "This snip doesnt exists!")
+			http.Redirect(w, r, "http://localhost:5173?error=not_found", http.StatusTemporaryRedirect)
 			return
 		}
 		writeError(w, http.StatusInternalServerError, err.Error())

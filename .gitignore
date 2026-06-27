@@ -1,6 +1,6 @@
-# Build artifacts
-/gosnip
-/cmd/gosnip/gosnip
+# Go build artifacts
+/backend/gosnip
+/backend/cmd/gosnip/gosnip
 *.exe
 *.exe~
 *.dll
@@ -22,6 +22,11 @@ profile.cov
 vendor/
 go.work
 go.work.sum
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.gitkeep
 
 # env file
 .env
